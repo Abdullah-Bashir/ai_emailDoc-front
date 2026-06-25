@@ -22,7 +22,7 @@ import {
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // Keep as null
+  const [error, setError] = useState<string | null>(null); // ✅ Explicitly type as string | null
   const [searchTerm, setSearchTerm] = useState("");
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
