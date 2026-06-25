@@ -22,7 +22,7 @@ import {
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); // Keep as null
   const [searchTerm, setSearchTerm] = useState("");
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -39,8 +39,9 @@ export default function InvoicesPage() {
       
       if (data.success) {
         setInvoices(data.data);
+        setError(null); // Clear error on success
       } else {
-        setError(data.message);
+        setError(data.message || "Failed to fetch invoices");
       }
     } catch (err) {
       setError("Failed to fetch invoices");
@@ -75,6 +76,7 @@ export default function InvoicesPage() {
   };
 
   const formatDate = (date) => {
+    if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -96,7 +98,7 @@ export default function InvoicesPage() {
     completed: invoices.filter(i => i.status === 'completed').length,
     processing: invoices.filter(i => i.status === 'processing').length,
     failed: invoices.filter(i => i.status === 'failed').length,
-    totalValue: invoices.reduce((sum, i) => sum + i.totalAmount, 0)
+    totalValue: invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
   };
 
   const filteredInvoices = invoices.filter(invoice =>
@@ -257,7 +259,6 @@ export default function InvoicesPage() {
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{invoice.currency}</p>
                     </div>
-              
                   </div>
                 </div>
               </div>
