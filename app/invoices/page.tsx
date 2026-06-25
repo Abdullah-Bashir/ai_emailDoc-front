@@ -19,10 +19,22 @@ import {
   DollarSign
 } from "lucide-react";
 
+// Define types for better TypeScript support
+interface Invoice {
+  _id: string;
+  vendorName?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  dueDate?: string;
+  totalAmount?: number;
+  currency?: string;
+  status?: 'completed' | 'processing' | 'failed' | string;
+}
+
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // ✅ Explicitly type as string | null
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -34,24 +46,32 @@ export default function InvoicesPage() {
   const fetchInvoices = async () => {
     try {
       setLoading(true);
+      setError(null); // Reset error before fetch
+      
       const response = await fetch(`${API_URL}/api/invoice`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.success) {
-        setInvoices(data.data);
-        setError(null); // Clear error on success
+        setInvoices(data.data || []);
+        setError(null);
       } else {
         setError(data.message || "Failed to fetch invoices");
       }
     } catch (err) {
-      setError("Failed to fetch invoices");
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch invoices";
+      setError(errorMessage);
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string = 'processing') => {
     const statusMap = {
       completed: { 
         icon: CheckCircle, 
@@ -66,7 +86,7 @@ export default function InvoicesPage() {
         color: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-800" 
       }
     };
-    const { icon: Icon, color } = statusMap[status] || statusMap.processing;
+    const { icon: Icon, color } = statusMap[status as keyof typeof statusMap] || statusMap.processing;
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${color}`}>
         <Icon className="w-3 h-3" />
@@ -75,7 +95,7 @@ export default function InvoicesPage() {
     );
   };
 
-  const formatDate = (date) => {
+  const formatDate = (date?: string) => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -84,7 +104,7 @@ export default function InvoicesPage() {
     });
   };
 
-  const formatCurrency = (amount, currency = 'USD') => {
+  const formatCurrency = (amount: number = 0, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
